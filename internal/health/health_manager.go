@@ -50,7 +50,7 @@ func (hm *Manager) HandleHealthAndMana() error {
 	}
 
 	// Player mana check
-	if hm.data.PlayerUnit.MPPercent() <= hpConfig.ChickenAt {
+	if hm.data.PlayerUnit.MPPercent() <= hpConfig.RejuvPotionAtMana/2 {
 		return fmt.Errorf("%w: Current Mana: %d percent", ErrChicken, hm.data.PlayerUnit.MPPercent())
 	}
 
