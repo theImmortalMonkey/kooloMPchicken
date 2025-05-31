@@ -222,57 +222,87 @@ func (s SorceressLevelingLightning) StatPoints() []context.StatAllocation {
 
 func (s SorceressLevelingLightning) SkillPoints() []skill.ID {
 	lvl, _ := s.Data.PlayerUnit.FindStat(stat.Level, 0)
-	var skillPoints []skill.ID
+	var skillsToLearnThisLevel []skill.ID // This slice will hold the skill(s) to learn at the current character level
 
+	// --- Skill Plan for Levels 1-24 (Lightning Leveling Phase) ---
+	// This map defines which skill to learn at each specific character level.
+	// You typically get 1 skill point per level-up.
+	// Example: level 2 gets ChargedBolt, level 3 gets ChargedBolt, level 4 gets FrozenArmor, etc.
+	// IMPORTANT: Ensure skill prerequisites (level, prior skills) are met for the level you assign them.
+	// Also, if you gain extra points from quests (e.g., Den of Evil, Radament, Izual),
+	// you'll need to decide if you want to explicitly map those levels too, or if they
+	// should naturally fall into the next unlearned skill in your progression.
+	levelUpSkillPlan := map[int]skill.ID{
+		2:  skill.ChargedBolt,
+		3:  skill.ChargedBolt,
+		4:  skill.FrozenArmor,   // Example: First utility skill
+		5:  skill.ChargedBolt,
+		6:  skill.StaticField,   // Example: Early damage utility
+		7:  skill.ChargedBolt,
+		8:  skill.ChargedBolt,
+		9:  skill.ChargedBolt,
+		10: skill.Telekinesis,   // Prerequisite for Teleport
+		11: skill.Warmth,        // Mana regeneration
+		12: skill.Nova,          // Your primary lightning skill
+		13: skill.ChargedBolt,   // Continue boosting Charged Bolt or Nova
+		14: skill.Nova,
+		15: skill.ChargedBolt,
+		16: skill.Nova,
+		17: skill.StaticField,   // More points in Static Field if desired
+		18: skill.Teleport,      // Mobility skill (requires Telekinesis)
+		19: skill.Nova,
+		20: skill.ChargedBolt,
+		21: skill.Nova,
+		22: skill.Nova,
+		23: skill.Nova,
+		24: skill.Nova,
+		// Add more levels and skills as needed up to Level 24 if your plan goes higher
+		// before the respec at Level 25.
+	}
+
+	// --- Logic for Skill Point Allocation ---
 	if lvl.Value < 25 {
-		skillPoints = []skill.ID{
-			skill.ChargedBolt,
-			skill.ChargedBolt,
-			skill.ChargedBolt,
-			skill.FrozenArmor,
-			skill.ChargedBolt,
-			skill.StaticField,
-			skill.StaticField,
-			skill.StaticField,
-			skill.StaticField,
-			skill.Telekinesis,
-			skill.Warmth,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Teleport,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
-			skill.Nova,
+		// During the leveling phase (before Level 25 respec)
+		if sID, ok := levelUpSkillPlan[lvl.Value]; ok {
+			// Check if we have a plan for the current character level
+
+			// Get the current level of the skill in-game
+			currentSkillLevel := 0
+			if charSkill, found := s.Data.PlayerUnit.Skills[sID]; found {
+				currentSkillLevel = int(charSkill.Level)
+			}
+
+			// Add the skill to the list if it hasn't reached its max hard points yet (usually 20)
+			// This prevents trying to put points into an already maxed skill.
+			// You might want a more sophisticated check here if you allow +skills from gear.
+			if currentSkillLevel < 20 { // 20 is typically the max hard points for a skill
+				skillsToLearnThisLevel = append(skillsToLearnThisLevel, sID)
+			} else {
+				// If the skill for this level is already maxed, log it and try to find the next skill
+				// (This part requires more advanced logic if you want to "skip" a level's planned skill
+				// and allocate the point to the next available one. For this simpler approach,
+				// if the designated skill is maxed, no point is allocated at this level via the plan.)
+				s.Logger.Debug("Skill already maxed for current level's plan", "skill", skill.SkillNames[sID], "level", lvl.Value)
+			}
 		}
 	} else {
-		skillPoints = []skill.ID{
-			skill.StaticField,
+		// --- Skill Plan for Levels 25+ (After Skill Reset / Final Build Phase) ---
+		// For the post-Level 25 phase, where you likely respec and have many points to dump,
+		// an ordered list of all skills to max out is often more practical than level-by-level.
+		// The `action` package will then iterate through this list until all `remainingPoints` are spent.
+		skillsToLearnThisLevel = []skill.ID{
+			skill.StaticField, // Prioritize key skills for the final build
 			skill.StaticField,
 			skill.StaticField,
 			skill.StaticField,
 			skill.Telekinesis,
 			skill.Teleport,
-			skill.FrozenArmor,
+			skill.FrozenArmor, // Or Shiver Armor/Chilling Armor depending on preference
 			skill.IceBolt,
 			skill.IceBlast,
 			skill.FrostNova,
 			skill.GlacialSpike,
-			skill.Blizzard,
+			skill.Blizzard, // Start maxing Blizzard
 			skill.Blizzard,
 			skill.Warmth,
 			skill.GlacialSpike,
@@ -283,34 +313,35 @@ func (s SorceressLevelingLightning) SkillPoints() []skill.ID {
 			skill.GlacialSpike,
 			skill.GlacialSpike,
 			skill.GlacialSpike,
+			skill.IceBlast, // Synergies for Blizzard
 			skill.IceBlast,
 			skill.IceBlast,
 			skill.IceBlast,
 			skill.IceBlast,
-			skill.IceBlast,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.ColdMastery, // Essential for cold damage
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
+			skill.Blizzard,
 			skill.Blizzard,
 			skill.Blizzard,
 			skill.Blizzard,
 			skill.Blizzard,
 			skill.ColdMastery,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
-			skill.Blizzard,
 			skill.ColdMastery,
 			skill.ColdMastery,
 			skill.ColdMastery,
-			skill.ColdMastery,
+			skill.GlacialSpike, // More synergies
 			skill.GlacialSpike,
 			skill.GlacialSpike,
 			skill.GlacialSpike,
@@ -321,12 +352,12 @@ func (s SorceressLevelingLightning) SkillPoints() []skill.ID {
 			skill.GlacialSpike,
 			skill.GlacialSpike,
 			skill.GlacialSpike,
-			skill.GlacialSpike,
+			// Continue with more Cold Mastery, Ice Blast, Frost Nova as desired to max synergies
 		}
 	}
 
-	s.Logger.Info("Assigning skill points", "level", lvl.Value, "skillPoints", skillPoints)
-	return skillPoints
+	s.Logger.Info("Deciding skill point allocation", "level", lvl.Value, "skillsToLearnThisLevel", skillsToLearnThisLevel)
+	return skillsToLearnThisLevel
 }
 
 func (s SorceressLevelingLightning) KillCountess() error {
