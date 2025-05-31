@@ -48,6 +48,7 @@ type KooloCfg struct {
 		EnableNewRunMessages         bool     `yaml:"enableNewRunMessages"`
 		EnableRunFinishMessages      bool     `yaml:"enableRunFinishMessages"`
 		EnableDiscordChickenMessages bool     `yaml:"enableDiscordChickenMessages"`
+		EnableDiscordErrorMessages   bool     `yaml:"enableDiscordErrorMessages"`
 		BotAdmins                    []string `yaml:"botAdmins"`
 		ChannelID                    string   `yaml:"channelId"`
 		Token                        string   `yaml:"token"`
@@ -109,6 +110,7 @@ type CharacterCfg struct {
 		UseMerc       bool   `yaml:"useMerc"`
 		StashToShared bool   `yaml:"stashToShared"`
 		UseTeleport   bool   `yaml:"useTeleport"`
+		BuffWithCTA   bool   `yaml:"buffWithCTA"`
 		BerserkerBarb struct {
 			FindItemSwitch              bool `yaml:"find_item_switch"`
 			SkipPotionPickupInTravincal bool `yaml:"skip_potion_pickup_in_travincal"`
